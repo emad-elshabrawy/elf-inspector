@@ -1,25 +1,20 @@
 # ELF Inspector
 
-A lightweight command-line tool written in C for inspecting the internal
-structure of ELF (Executable and Linkable Format) binaries.
+A lightweight command-line tool written in **C** for inspecting the internal structure of **ELF (Executable and Linkable Format)** binaries on Linux and Unix-like systems.
 
-The project was built as a hands-on learning exercise to understand how
-ELF binaries are organized at the binary level, with a focus on parsing
-ELF headers, program headers, and section headers directly from the file.
+The project was developed as a hands-on systems programming and binary analysis exercise, with a focus on understanding how ELF binaries are structured and how their metadata can be parsed directly from the binary file without relying on external ELF parsing libraries.
 
 ---
 
 ## Overview
 
-ELF is the standard binary format used by Linux and many Unix-like systems
-for executables, object files, shared libraries, and core dumps.
+ELF is the standard binary format used by Linux and many Unix-like systems for executables, object files, shared libraries, and other binary objects.
 
-Instead of relying on tools such as `readelf` to display ELF metadata,
-this project parses the ELF structures directly in C and presents selected
-information in a simple and readable format.
+Instead of relying entirely on utilities such as `readelf`, this project demonstrates how selected ELF structures can be read directly from a binary file using C and the data structures provided by `<elf.h>`.
 
-The current implementation focuses on three major parts of an ELF binary:
+The current implementation focuses on three main components:
 
+ext
 ELF Inspector
 │
 ├── ELF Header
@@ -42,116 +37,219 @@ ELF Inspector
     ├── File Offset
     └── Section Size
 
----
+The goal is not to replace mature tools such as readelf, but to provide a clear implementation of the basic parsing process and build a stronger understanding of ELF internals.
 
-## Features
+Features
+ELF Header Inspection
 
-### ELF Header
+The program reads the ELF header and displays:
 
-The tool reads the ELF header and displays basic information about the
-binary, including:
-
-- ELF class
-- Entry point address
-- Number of program headers
-- Number of section headers
+ELF class
+Entry point address
+Number of program headers
+Number of section headers
 
 Example:
+
+ELF Inspector
+=============
 
 ELF Class    : ELF64
 Entry Point  : 0x10e0
 Program Headers : 14
 Section Headers : 31
+Program Header Inspection
 
----
+The program parses the ELF program header table and displays information about each program header, including:
 
-### Program Headers
-
-Program headers describe how parts of an ELF file are mapped into memory
-when the executable is loaded.
-
-The inspector displays:
-
-- Program header index
-- Segment type
-- File offset
-- Virtual address
-- File size
-- Memory size
-- Segment permissions
+Program header type
+File offset
+Virtual address
+File size
+Memory size
+Segment permissions
 
 Example:
 
-[2] LOAD, Offset: 0x0, VirtAddr: 0x0,
-    FileSize: 0x858, MemSize: 0x858, Flags: R--
+Program Headers
+================
+[0] PHDR, Offset: 0x40, VirtAddr: 0x40, FileSize: 0x310, MemSize: 0x310, Flags: R--
+[1] INTERP, Offset: 0x394, VirtAddr: 0x394, FileSize: 0x1c, MemSize: 0x1c, Flags: R--
+[2] LOAD, Offset: 0x0, VirtAddr: 0x0, FileSize: 0x858, MemSize: 0x858, Flags: R--
+[3] LOAD, Offset: 0x1000, VirtAddr: 0x1000, FileSize: 0x8a5, MemSize: 0x8a5, Flags: R-X
 
-[3] LOAD, Offset: 0x1000, VirtAddr: 0x1000,
-    FileSize: 0x8a5, MemSize: 0x8a5, Flags: R-X
+This provides a practical view of how the operating system organizes the portions of an ELF file that are relevant during program loading.
 
-[5] LOAD, Offset: 0x2dd0, VirtAddr: 0x3dd0,
-    FileSize: 0x290, MemSize: 0x2a0, Flags: RW-
+Section Header Inspection
 
-Known program header types are translated into human-readable names such
-as:
+The program also parses the ELF section header table and displays:
 
-PHDR
-INTERP
-LOAD
-DYNAMIC
-NOTE
-GNU_PROPERTY
-GNU_EH_FRAME
-GNU_STACK
-GNU_RELRO
-
-Unknown types are reported as `UNKNOWN` rather than being silently ignored.
-
----
-
-### Section Headers
-
-Section headers describe the logical sections contained within an ELF file.
-
-The inspector displays:
-
-- Section index
-- Section type
-- Virtual address
-- File offset
-- Section size
+Section index
+Section type
+Virtual address
+File offset
+Section size
 
 Example:
 
-[11] PROGBITS, Address: 0x1000, Offset: 0x1000, Size: 0x17
-[14] PROGBITS, Address: 0x10e0, Offset: 0x10e0, Size: 0x7bb
-[22] DYNAMIC, Address: 0x3de0, Offset: 0x2de0, Size: 0x1e0
-[28] SYMTAB, Address: 0x0, Offset: 0x3080, Size: 0x498
+Section Headers
+================
+[0] NULL, Address: 0x0, Offset: 0x0, Size: 0x0
+[1] NOTE, Address: 0x350, Offset: 0x350, Size: 0x20
+[2] NOTE, Address: 0x370, Offset: 0x370, Size: 0x24
+[3] PROGBITS, Address: 0x394, Offset: 0x394, Size: 0x1c
+[4] GNU_HASH, Address: 0x3b0, Offset: 0x3b0, Size: 0x28
 
-The implementation recognizes several standard and GNU-specific section
-types, including:
+This helps demonstrate the difference between the sections used to organize information inside the binary and the segments described by the program headers.
 
-NULL
-PROGBITS
-SYMTAB
-STRTAB
-RELA
-DYNAMIC
-NOTE
-NOBITS
-GNU_HASH
-DYNSYM
-VERSYM
-VERNEED
+Why This Project?
 
----
+This project was built primarily as a learning exercise in:
 
-## Example
+C programming
+Low-level file handling
+Binary file parsing
+ELF internals
+Linux executable formats
+Structures and offsets
+File seeking with fseek()
+Binary reads with fread()
+Working with hexadecimal addresses and sizes
+Understanding program headers and section headers
+Using <elf.h> structures
+Building command-line tools
 
-Running the inspector against itself:
+Rather than treating an ELF binary as a black box, the project explores how its metadata can be accessed directly from the file.
+
+How It Works
+
+At a high level, the program follows this process:
+
+                    ELF Binary
+                        │
+                        ▼
+                Open binary file
+                        │
+                        ▼
+                  Read ELF Header
+                        │
+             ┌──────────┴──────────┐
+             │                     │
+             ▼                     ▼
+      Program Headers       Section Headers
+             │                     │
+             ▼                     ▼
+       Parse entries          Parse entries
+             │                     │
+             └──────────┬──────────┘
+                        │
+                        ▼
+                 Display metadata
+
+The program opens the specified binary in read-only binary mode and uses ELF structures to interpret the data stored in the file.
+
+The ELF header provides the locations and counts required to locate the program header table and section header table.
+
+The program then seeks to the appropriate offsets and reads the corresponding structures from the file.
+
+Project Structure
+elf-inspector/
+│
+├── main.c
+├── Makefile
+├── README.md
+├── .gitignore
+└── elf-inspector
+main.c
+
+Contains the implementation of the ELF parsing logic.
+
+It is responsible for:
+
+Opening the target ELF file
+Reading the ELF header
+Displaying ELF metadata
+Reading program headers
+Displaying program header information
+Reading section headers
+Displaying section header information
+Handling file-reading and seeking errors
+Closing the input file
+Makefile
+
+Provides simple build and cleanup commands for the project.
+
+README.md
+
+Project documentation and usage instructions.
+
+.gitignore
+
+Prevents generated build artifacts such as the compiled elf-inspector executable and object files from being tracked by Git.
+
+Requirements
+
+The project requires:
+
+Linux or another Unix-like environment
+GCC
+GNU Make
+Standard C library
+ELF development definitions provided by <elf.h>
+
+The project is intended to be compiled with:
+
+gcc -Wall -Wextra -std=c11
+Building
+
+Clone the repository and enter the project directory:
+
+git clone https://github.com/emad-elshabrawy/elf-inspector.git
+cd elf-inspector
+
+Build the project using:
+
+make
+
+The Makefile compiles the source using:
+
+gcc -Wall -Wextra -std=c11 main.c -o elf-inspector
+Cleaning the Build
+
+To remove the generated executable:
+
+make clean
+
+You can then rebuild the project with:
+
+make
+Usage
+
+The program expects an ELF file as its command-line argument.
+
+./elf-inspector <file>
+
+For example:
 
 ./elf-inspector elf-inspector
 
-produces output similar to:
+You can also inspect another ELF executable:
+
+./elf-inspector /bin/ls
+
+Or:
+
+./elf-inspector /bin/cat
+
+The program will print the ELF header information followed by the program headers and section headers.
+
+Example
+
+Running the program against its own executable:
+
+./elf-inspector elf-inspector
+
+Produces output similar to:
 
 ELF Inspector
 =============
@@ -163,327 +261,272 @@ Section Headers : 31
 
 Program Headers
 ================
-[0] PHDR, Offset: 0x40, VirtAddr: 0x40,
-    FileSize: 0x310, MemSize: 0x310, Flags: R--
+[0] PHDR, Offset: 0x40, VirtAddr: 0x40, FileSize: 0x310, MemSize: 0x310, Flags: R--
+[1] INTERP, Offset: 0x394, VirtAddr: 0x394, FileSize: 0x1c, MemSize: 0x1c, Flags: R--
+[2] LOAD, Offset: 0x0, VirtAddr: 0x0, FileSize: 0x858, MemSize: 0x858, Flags: R--
+[3] LOAD, Offset: 0x1000, VirtAddr: 0x1000, FileSize: 0x8a5, MemSize: 0x8a5, Flags: R-X
+[4] LOAD, Offset: 0x2000, VirtAddr: 0x2000, FileSize: 0x4dc, MemSize: 0x4dc, Flags: R--
+[5] LOAD, Offset: 0x2dd0, VirtAddr: 0x3dd0, FileSize: 0x290, MemSize: 0x2a0, Flags: RW-
 
-[1] INTERP, Offset: 0x394, VirtAddr: 0x394,
-    FileSize: 0x1c, MemSize: 0x1c, Flags: R--
+The exact values depend on the ELF file being inspected.
 
-[2] LOAD, Offset: 0x0, VirtAddr: 0x0,
-    FileSize: 0x858, MemSize: 0x858, Flags: R--
+Comparison with readelf
 
-[3] LOAD, Offset: 0x1000, VirtAddr: 0x1000,
-    FileSize: 0x8a5, MemSize: 0x8a5, Flags: R-X
-
-[5] LOAD, Offset: 0x2dd0, VirtAddr: 0x3dd0,
-    FileSize: 0x290, MemSize: 0x2a0, Flags: RW-
-
-Section Headers
-================
-[0] NULL, Address: 0x0, Offset: 0x0, Size: 0x0
-[1] NOTE, Address: 0x350, Offset: 0x350, Size: 0x20
-[4] GNU_HASH, Address: 0x3b0, Offset: 0x3b0, Size: 0x28
-[5] DYNSYM, Address: 0x3d8, Offset: 0x3d8, Size: 0x198
-[14] PROGBITS, Address: 0x10e0, Offset: 0x10e0, Size: 0x7bb
-[22] DYNAMIC, Address: 0x3de0, Offset: 0x2de0, Size: 0x1e0
-[26] NOBITS, Address: 0x4060, Offset: 0x3060, Size: 0x10
-[28] SYMTAB, Address: 0x0, Offset: 0x3080, Size: 0x498
-
----
-
-## Building
-
-### Requirements
-
-The project requires:
-
-- GCC
-- GNU Make
-- A Linux/Unix-like environment
-- Standard C11 compiler support
-
-On Kali Linux, the required build tools are normally available through
-the standard development environment.
-
----
-
-### Build with Make
-
-Clone the repository and enter the project directory:
-
-git clone https://github.com/<your-username>/elf-inspector.git
-cd elf-inspector
-
-Build the project:
-
-make
-
-This creates:
-
-elf-inspector
-
----
-
-### Manual Compilation
-
-The program can also be compiled directly with GCC:
-
-gcc -Wall -Wextra -std=c11 main.c -o elf-inspector
-
-The compiler flags enable useful warnings and enforce the C11 standard:
-
-- `-Wall` — enable common compiler warnings
-- `-Wextra` — enable additional warnings
-- `-std=c11` — compile using the C11 language standard
-
----
-
-## Usage
-
-The program expects an ELF file as a command-line argument:
-
-./elf-inspector <elf-file>
+The project is intentionally similar in concept to a small subset of the functionality provided by readelf.
 
 For example:
-
-./elf-inspector elf-inspector
-
-You can also inspect another ELF executable available on your system:
-
-./elf-inspector /bin/ls
-
----
-
-## Cleaning the Build
-
-To remove the generated executable:
-
-make clean
-
-The generated binary is intentionally excluded from version control through
-`.gitignore`.
-
----
-
-## Project Structure
-
-elf-inspector/
-│
-├── main.c
-│   └── ELF parsing and inspection logic
-│
-├── Makefile
-│   └── Build and cleanup commands
-│
-├── README.md
-│   └── Project documentation
-│
-├── .gitignore
-│   └── Files excluded from Git
-│
-└── elf-inspector
-    └── Generated executable (not tracked by Git)
-
----
-
-## How It Works
-
-At a high level, the program follows this process:
-
-                    ELF File
-                       │
-                       ▼
-              Read ELF Header
-                       │
-          ┌────────────┴────────────┐
-          │                         │
-          ▼                         ▼
-   Program Headers           Section Headers
-          │                         │
-          ▼                         ▼
-   Parse each segment        Parse each section
-          │                         │
-          ▼                         ▼
-   Decode type/flags         Decode section type
-          │                         │
-          └────────────┬────────────┘
-                       │
-                       ▼
-                Human-readable
-                     output
-
-The implementation uses the ELF data structures provided by the system
-headers and reads the binary metadata directly rather than invoking
-`readelf` internally.
-
----
-
-## ELF Concepts Covered
-
-This project provides practical exposure to several important ELF concepts:
-
-### ELF Header
-
-The ELF header acts as the main metadata structure of the binary.
-
-It contains information that allows the program to determine how the rest
-of the ELF file should be interpreted.
-
----
-
-### Program Headers
-
-Program headers describe the parts of the file that are relevant to the
-runtime loader.
-
-They are especially important for understanding how an executable is
-mapped into memory.
-
-For example, a typical executable contains different `LOAD` segments with
-different permissions:
-
-R--   Read-only
-R-X   Read + Execute
-RW-   Read + Write
-
----
-
-### Section Headers
-
-Sections organize the contents of the ELF file into logical units.
-
-Common examples include:
-
-.text
-.rodata
-.data
-.bss
-.symtab
-.strtab
-.dynsym
-.dynstr
-.rela.dyn
-.rela.plt
-
-The inspector currently focuses on their metadata rather than dumping the
-contents of each section.
-
----
-
-## Design Goals
-
-The project was intentionally kept small and focused.
-
-The main goals are:
-
-1. Understand the structure of ELF binaries.
-2. Practice binary file parsing in C.
-3. Work with ELF structures and fixed-width integer types.
-4. Understand the difference between program headers and section headers.
-5. Convert low-level numeric constants into human-readable information.
-6. Build a useful command-line utility without depending on external ELF
-   inspection tools for its core functionality.
-7. Practice writing portable, warning-clean C code within the supported
-   environment.
-
----
-
-## Current Scope
-
-The current version focuses on inspecting ELF metadata.
-
-It currently provides information about:
-
-- ELF class
-- Entry point
-- Program header count
-- Section header count
-- Program header types
-- Program header offsets
-- Program header virtual addresses
-- Program header file sizes
-- Program header memory sizes
-- Program header permissions
-- Section types
-- Section addresses
-- Section offsets
-- Section sizes
-
-The project is intentionally not a full replacement for `readelf`.
-
----
-
-## Future Improvements
-
-Possible future improvements include:
-
-- Displaying ELF endianness
-- Displaying machine architecture
-- Displaying ELF file type
-- Displaying ELF version information
-- Displaying section names
-- Displaying section flags
-- Displaying section alignment
-- Displaying program header alignment
-- Showing the ELF interpreter
-- Displaying symbol tables
-- Displaying dynamic symbols
-- Displaying relocation entries
-- Displaying section-to-segment mappings
-- Adding stronger input validation
-- Improving error messages
-- Supporting additional ELF classes and architectures
-- Adding more detailed command-line options
-
-These features are intentionally left as future work so the project can
-evolve incrementally.
-
----
-
-## Learning Outcomes
-
-Building this project provided practical experience with:
-
-- C programming
-- Binary file parsing
-- ELF file structures
-- Linux executable formats
-- Memory addresses and file offsets
-- Program loading concepts
-- File I/O
-- Structures and fixed-width data types
-- Bitwise flags
-- Command-line arguments
-- GCC compiler warnings
-- Makefiles
-- Git and GitHub workflow
-
----
-
-## Validation
-
-The output of the tool can be compared against established Linux ELF
-inspection utilities such as:
 
 readelf -h <file>
+
+displays ELF header information.
+
 readelf -l <file>
+
+displays program headers.
+
 readelf -S <file>
+
+displays section headers.
+
+The equivalent operation with this project is:
+
+./elf-inspector <file>
+
+The purpose of implementing the functionality manually is educational: the project demonstrates what happens underneath higher-level ELF inspection utilities.
+
+ELF Concepts Covered
+
+This project provides practical exposure to several important ELF concepts.
+
+ELF Header
+
+The ELF header is located at the beginning of the file and describes fundamental properties of the binary.
+
+Among other fields, it contains information about:
+
+The ELF class
+The entry point
+The location of the program header table
+The number of program headers
+The location of the section header table
+The number of section headers
+Program Headers
+
+Program headers describe segments that are relevant to loading and executing the binary.
+
+The project displays information such as:
+
+Type
+Offset
+Virtual Address
+File Size
+Memory Size
+Flags
+
+The permissions are displayed using:
+
+R = Read
+W = Write
+X = Execute
 
 For example:
 
+R-X
+
+means the segment is readable and executable.
+
+Section Headers
+
+Section headers describe sections contained within the ELF file.
+
+The project displays:
+
+Section Type
+Virtual Address
+File Offset
+Section Size
+
+Examples of section types encountered include:
+
+PROGBITS
+SYMTAB
+STRTAB
+RELA
+DYNAMIC
+NOTE
+NOBITS
+GNU_HASH
+Error Handling
+
+The program includes checks around important file operations such as:
+
+Opening the input file
+Reading ELF structures
+Seeking to file offsets
+Reading program headers
+Reading section headers
+
+When an operation fails, an error is reported and the file is closed before the program exits.
+
+This is important when dealing with binary files because invalid offsets, corrupted files, truncated files, or unsupported input can otherwise result in incorrect parsing.
+
+Current Scope
+
+The current version focuses on inspecting the main structural metadata of ELF binaries.
+
+The implementation is intentionally kept relatively small and focused on the learning objectives of the project.
+
+It currently demonstrates inspection of:
+
+ELF Header
+Program Headers
+Section Headers
+
+It is not intended to be a complete replacement for professional ELF analysis tools.
+
+Limitations
+
+This project should be considered a learning-oriented ELF inspector rather than a production-grade binary analysis framework.
+
+Current limitations include:
+
+The implementation is focused on ELF64 structures.
+It does not attempt to provide the complete functionality of readelf.
+It does not disassemble machine code.
+It does not perform symbol resolution analysis.
+It does not provide relocation analysis beyond displaying section information.
+It does not modify ELF binaries.
+It does not provide an interactive interface.
+The output is designed for readability and learning rather than machine-readable parsing.
+
+These limitations are intentional and leave room for future improvements.
+
+Possible Future Improvements
+
+Potential extensions to the project include:
+
+Add ELF32 support.
+Validate the ELF magic number before parsing.
+Display the ELF architecture and machine type.
+Display the ELF endianness.
+Display the operating system ABI.
+Display section names instead of only section types.
+Display program header names and additional metadata.
+Display symbol tables.
+Display dynamic symbols.
+Display relocation entries.
+Display string tables.
+Add command-line options for selecting specific information.
+Add colored terminal output.
+Add better validation for malformed or truncated ELF files.
+Add support for more ELF architectures.
+Add automated tests.
+Improve portability across Unix-like systems.
+Add structured or machine-readable output.
+Learning Outcomes
+
+By implementing this project, the main concepts practiced include:
+
+C
+│
+├── File I/O
+│   ├── fopen()
+│   ├── fread()
+│   ├── fseek()
+│   └── fclose()
+│
+├── Binary Data
+│   ├── Offsets
+│   ├── Addresses
+│   ├── Sizes
+│   └── Hexadecimal representation
+│
+├── ELF
+│   ├── ELF Header
+│   ├── Program Headers
+│   ├── Section Headers
+│   └── ELF Types
+│
+└── Linux Systems Programming
+    ├── Executable formats
+    ├── Memory segments
+    ├── File layout
+    └── Binary analysis
+
+The project is especially useful as a starting point for understanding how tools such as readelf, binary analysis utilities, and other low-level inspection tools obtain information from executable files.
+
+Development Approach
+
+The implementation intentionally uses the ELF structures available through:
+
+#include <elf.h>
+
+and reads the corresponding structures directly from the binary file.
+
+Rather than depending on a dedicated ELF parsing library, the project works with the underlying file layout and demonstrates the relationship between:
+
+File Offset
+       │
+       ▼
+ELF Structure
+       │
+       ▼
+Parsed Metadata
+       │
+       ▼
+Human-readable Output
+
+This makes the project useful for studying the connection between C structures and real binary file formats.
+
+Building and Testing
+
+A simple development cycle is:
+
+make clean
+make
 ./elf-inspector elf-inspector
-readelf -h elf-inspector
-readelf -l elf-inspector
-readelf -S elf-inspector
 
-The purpose of this comparison is to validate the parsed ELF metadata and
-better understand how the information displayed by standard ELF utilities
-maps to the underlying ELF structures.
+The project can also be tested against common Linux executables:
 
----
+./elf-inspector /bin/ls
+./elf-inspector /bin/cat
+./elf-inspector /bin/bash
 
-## License
+For comparison, the same binaries can be inspected using:
 
-This project is provided for educational and learning purposes.
+readelf -h /bin/ls
+readelf -l /bin/ls
+readelf -S /bin/ls
 
-A specific open-source license can be added in a future revision.
+This makes it possible to compare the output of the educational implementation with the corresponding information provided by readelf.
+
+Project Status
+
+Status: Completed — Initial Learning Implementation
+
+The current version successfully demonstrates direct parsing and display of core ELF metadata, including:
+
+ELF header information
+Program headers
+Section headers
+Segment permissions
+File offsets
+Virtual addresses
+File and memory sizes
+
+The project can be extended incrementally as deeper ELF concepts are studied.
+
+Repository
+
+GitHub:
+
+https://github.com/emad-elshabrawy/elf-inspector
+Author
+
+Emad Elshabrawy
+
+This project was created as a practical systems programming and binary analysis exercise, with the goal of developing a stronger understanding of ELF internals and low-level Linux programming.
+
+License
+
+No license has been specified for this project yet.
