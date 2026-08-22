@@ -14,7 +14,7 @@ Instead of relying entirely on utilities such as `readelf`, this project demonst
 
 The current implementation focuses on three main components:
 
-ext
+```text
 ELF Inspector
 │
 ├── ELF Header
