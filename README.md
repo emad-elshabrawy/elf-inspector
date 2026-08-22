@@ -37,7 +37,7 @@ ELF Inspector
     ├── File Offset
     └── Section Size
 ./elf-inspector /bin/cat
-
+```
 The program prints the ELF header information followed by the program headers and section headers.
 
 Example
@@ -220,7 +220,7 @@ Add structured or machine-readable output.
 Learning Outcomes
 
 By implementing this project, the main concepts practiced include:
-
+```text
 C
 │
 ├── File I/O
@@ -246,7 +246,7 @@ C
     ├── Memory Segments
     ├── File Layout
     └── Binary Analysis
-
+```
 The project is especially useful as a starting point for understanding how tools such as readelf, binary analysis utilities, and other low-level inspection tools obtain information from executable files.
 
 Development Approach
