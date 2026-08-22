@@ -258,7 +258,7 @@ The implementation intentionally uses the ELF structures available through:
 and reads the corresponding structures directly from the binary file.
 
 Rather than depending on a dedicated ELF parsing library, the project works with the underlying file layout and demonstrates the relationship between:
-
+```text
 File Offset
      │
      ▼
@@ -269,7 +269,7 @@ Parsed Metadata
      │
      ▼
 Human-readable Output
-
+```
 This makes the project useful for studying the connection between C structures and real binary file formats.
 
 Building and Testing
