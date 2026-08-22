@@ -36,8 +36,9 @@ ELF Inspector
     ├── Virtual Address
     ├── File Offset
     └── Section Size
-./elf-inspector /bin/cat
 ```
+./elf-inspector /bin/cat
+
 The program prints the ELF header information followed by the program headers and section headers.
 
 Example
