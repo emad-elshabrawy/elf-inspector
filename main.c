@@ -152,62 +152,63 @@ int main(int argc, char *argv[])
             return 1;
         }
 
-       printf("[%d] %s, Offset: 0x%lx, VirtAddr: 0x%lx, "
-       "FileSize: 0x%lx, MemSize: 0x%lx, Flags: ",
-       i,
-       get_program_type(program_header.p_type),
-       (unsigned long)program_header.p_offset,
-       (unsigned long)program_header.p_vaddr,
-       (unsigned long)program_header.p_filesz,
-       (unsigned long)program_header.p_memsz);
+        printf("[%d] %s, Offset: 0x%lx, VirtAddr: 0x%lx, "
+        "FileSize: 0x%lx, MemSize: 0x%lx, Flags: ",
+        i,
+        get_program_type(program_header.p_type),
+        (unsigned long)program_header.p_offset,
+        (unsigned long)program_header.p_vaddr,
+        (unsigned long)program_header.p_filesz,
+        (unsigned long)program_header.p_memsz);
 
-      print_permissions(program_header.p_flags);
+        print_permissions(program_header.p_flags);
 
-      printf("\n");
+        printf("\n");
     } 
-     printf("\nSection Headers\n");
-     printf("================\n");
+    printf("\nSection Headers\n");
+    printf("================\n");
 
     Elf64_Shdr string_table_header;
 
-    if (fseek(file, header.e_shoff + (header.e_shstrndx * sizeof(Elf64_Shdr)), SEEK_SET) != 0){
-    fprintf(stderr, "Error: could not seek to string table header\n");
-    fclose(file);
-    return 1;
+    if (fseek(file, header.e_shoff + (header.e_shstrndx * sizeof(Elf64_Shdr)), SEEK_SET) != 0)
+    {
+        fprintf(stderr, "Error: could not seek to string table header\n");
+        fclose(file);
+        return 1;
     }
 
     if (fread(&string_table_header, sizeof(string_table_header), 1, file) != 1)
     {
-    fprintf(stderr, "Error: could not read string table header\n");
-    fclose(file);
-    return 1;
+        fprintf(stderr, "Error: could not read string table header\n");
+        fclose(file);
+        return 1;
     }
     
      if (fseek(file, header.e_shoff, SEEK_SET) != 0)
      {
-     perror("Failed to seek to section headers");
-     fclose(file);
-     return 1;
-     }
-
-     for (int i = 0; i < header.e_shnum; i++)
-     {
-     Elf64_Shdr section_header;
-
-     if (fread(&section_header, sizeof(section_header), 1, file) != 1)
-     {
-        perror("Failed to read section header");
+        perror("Failed to seek to section headers");
         fclose(file);
         return 1;
      }
 
-     printf("[%d] %s, Address: 0x%lx, Offset: 0x%lx, "
-           "Size: 0x%lx\n",
-           i,
-           get_section_type(section_header.sh_type),
-           (unsigned long)section_header.sh_addr,
-           (unsigned long)section_header.sh_offset,
-           (unsigned long)section_header.sh_size);
+     for (int i = 0; i < header.e_shnum; i++)
+     {
+        Elf64_Shdr section_header;
+
+        if (fread(&section_header, sizeof(section_header), 1, file) != 1)
+        {
+            perror("Failed to read section header");
+            fclose(file);
+            return 1;
+        }
+
+        printf("[%d] %s, Address: 0x%lx, Offset: 0x%lx, "
+            "Size: 0x%lx\n",
+            i,
+            get_section_type(section_header.sh_type),
+            (unsigned long)section_header.sh_addr,
+            (unsigned long)section_header.sh_offset,
+            (unsigned long)section_header.sh_size);
     } 
 
     fclose(file);
