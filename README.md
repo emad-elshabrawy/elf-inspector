@@ -1,80 +1,79 @@
 # ELF Inspector
 
-> A lightweight command-line ELF binary analyzer written in C for inspecting and understanding the internal structure of ELF executables and related binary files.
+### A Lightweight ELF Binary Analysis Tool Built in C
 
-## 📌 Overview
-
-**ELF Inspector** is a systems-programming and binary-analysis project that parses **ELF (Executable and Linkable Format)** files directly and presents important structural metadata in a clear, human-readable format.
-
-Instead of relying on an existing utility such as `readelf`, the project demonstrates how ELF structures can be accessed and interpreted programmatically using C.
-
-The main objective is not to replace professional ELF-analysis tools, but to provide a practical implementation for understanding how executable binaries are structured and how operating systems interpret their metadata.
-
-The current implementation focuses on three fundamental ELF components:
-
-- **ELF Header**
-- **Program Headers**
-- **Section Headers**
+> **ELF Inspector** is a command-line utility that parses ELF binaries directly and transforms low-level executable metadata into clear, human-readable information.
 
 ---
 
-## 🎯 Why ELF Inspector?
+## 📌 Overview
 
-Compiled executables are often treated as black boxes. ELF Inspector approaches the problem from the opposite direction: it starts from the compiled binary and exposes the information that describes its structure and runtime representation.
+**ELF (Executable and Linkable Format)** is one of the fundamental binary formats used by Linux and Unix-like systems. It is used for executables, object files, shared libraries, and core dumps.
 
-The project helps answer questions such as:
+Although compiled programs are normally treated as ready-to-run applications, an ELF binary contains a structured representation that describes how the file should be interpreted and, for executable files, how relevant parts are loaded into memory.
 
-- What type of ELF file is this?
-- Is it ELF32 or ELF64?
-- Where is the program entry point?
-- How many program and section headers exist?
-- What segments are loaded into memory?
-- Where are those segments located in the file?
-- What virtual addresses do they use?
-- What are their file and memory sizes?
-- What permissions do they have?
-- What sections exist inside the binary?
-- How is the binary logically organized?
+**ELF Inspector** explores this structure from the binary level.
 
-This creates a practical connection between:
+Instead of relying on `readelf` internally, the project reads the ELF file directly in **C**, interprets its metadata, and presents the most important information in a compact and readable command-line output.
+
+The current implementation focuses on three fundamental components:
 
 ```text
-Source Code
-     ↓
-Compiler / Linker
-     ↓
-ELF Binary
-     ↓
-ELF Metadata
-     ↓
-Runtime Memory Representation
+                         ELF Binary
+                             │
+                             ▼
+                      ┌─────────────┐
+                      │ ELF Header  │
+                      └──────┬──────┘
+                             │
+                 ┌───────────┴───────────┐
+                 ▼                       ▼
+        Program Header Table     Section Header Table
+                 │                       │
+                 ▼                       ▼
+          Runtime / Loading       Logical Organization
+              Metadata                Metadata
+                 │                       │
+                 └───────────┬───────────┘
+                             ▼
+                    Human-readable Output
 ```
-Core Features
-1. ELF Header Analysis
+Project Purpose
 
-The ELF Header is the starting point for interpreting the binary.
+The main purpose of ELF Inspector is to make the internal structure of an ELF binary understandable through a practical systems-programming implementation.
 
-ELF Inspector extracts and displays important information including:
+The project connects several important concepts:
 
-ELF class
-Entry point address
-Number of program headers
-Number of section headers
+C Programming → Binary File I/O → ELF Structures → Memory & Addresses → Program Loading → Executable Analysis
 
-Example:
+Rather than simply using an existing ELF inspection tool, the project demonstrates how the underlying metadata can be accessed and interpreted programmatically.
 
-ELF Class       : ELF64
-Entry Point     : 0x10e0
-Program Headers : 14
-Section Headers : 31
+🔍 What Does It Inspect?
+1. ELF Header
 
-These values provide a quick structural overview of the inspected binary.
+The ELF Header acts as the starting point for interpreting the binary.
 
-2. Program Header Analysis
+ELF Inspector extracts:
 
-Program Headers describe segments that are relevant to loading and executing an ELF file.
+ELF Class — such as ELF64
+Entry Point Address
+Number of Program Headers
+Number of Section Headers
 
-The inspector displays:
+For example:
+
+ELF Class        : ELF64
+Entry Point      : 0x10e0
+Program Headers  : 14
+Section Headers  : 31
+
+The entry point is particularly important because it represents the virtual address where execution begins for an executable.
+
+2. Program Headers
+
+Program Headers describe segments and provide information relevant to the runtime loading of an ELF file.
+
+For each program header, the inspector reports:
 
 Segment index
 Segment type
@@ -82,7 +81,7 @@ File offset
 Virtual address
 File size
 Memory size
-Segment permissions
+Permissions
 
 Example:
 
@@ -95,17 +94,23 @@ Example:
 [5] LOAD, Offset: 0x2dd0, VirtAddr: 0x3dd0,
     FileSize: 0x290, MemSize: 0x2a0, Flags: RW-
 
-Recognized segment types are converted from numeric ELF constants into readable names such as:
+Recognized segment types are converted from numeric ELF constants into meaningful names such as:
 
-PHDR, INTERP, LOAD, DYNAMIC, NOTE, GNU_STACK, and GNU_RELRO.
+PHDR, INTERP, LOAD, DYNAMIC, NOTE, GNU_PROPERTY, GNU_EH_FRAME, GNU_STACK, and GNU_RELRO.
 
-Unknown values are explicitly reported as UNKNOWN rather than being silently ignored.
+Segment permissions are also represented in a readable form:
 
-3. Section Header Analysis
+R--   Read
+R-X   Read + Execute
+RW-   Read + Write
 
-Section Headers describe the logical organization of an ELF file and are particularly relevant to compilation, linking, and binary organization.
+This makes the Program Header table useful for understanding how different parts of an executable relate to memory and execution.
 
-The inspector displays:
+3. Section Headers
+
+Section Headers describe the logical organization of an ELF file.
+
+The inspector reports:
 
 Section index
 Section type
@@ -117,131 +122,69 @@ Example:
 
 [11] PROGBITS, Address: 0x1000, Offset: 0x1000, Size: 0x17
 [14] PROGBITS, Address: 0x10e0, Offset: 0x10e0, Size: 0x7bb
-[22] DYNAMIC, Address: 0x3de0, Offset: 0x2de0, Size: 0x1e0
-[28] SYMTAB, Address: 0x0, Offset: 0x3080, Size: 0x498
+[22] DYNAMIC,  Address: 0x3de0, Offset: 0x2de0, Size: 0x1e0
+[28] SYMTAB,   Address: 0x0,    Offset: 0x3080, Size: 0x498
 
-The current implementation focuses on section metadata rather than dumping the complete raw contents of every section.
+The project focuses on section metadata, rather than dumping the complete raw contents of every section.
 
-🧠 Program Headers vs Section Headers
+🧠 Program Headers vs. Section Headers
 
-One of the main concepts demonstrated by the project is the distinction between Program Headers and Section Headers.
+One of the key concepts demonstrated by the project is that Program Headers and Section Headers describe the ELF file from two different perspectives.
 
 Program Headers	Section Headers
 Describe segments	Describe sections
 Runtime / loading perspective	Logical / organizational perspective
 Important to the loader	Important for linking and organization
-Describe memory mapping	Describe file organization
+Focus on memory mapping	Focus on file organization
 
-A simple way to remember the difference:
+A useful mental model is:
 
 Program Headers  →  How is it loaded?
 
 Section Headers  →  How is it organized?
 
-Understanding this distinction is fundamental when studying ELF internals.
+Understanding this distinction is central to understanding ELF internals.
 
-⚙️ How It Works
+⚙️ How ELF Inspector Works
 
-ELF Inspector follows a direct parsing workflow:
+The tool follows a direct parsing workflow:
 ```text
-             ELF Binary
-                  │
-                  ▼
-          Read ELF Metadata
-                  │
-                  ▼
-             ELF Header
-                  │
-          ┌───────┴───────┐
-          ▼               ▼
- Program Headers    Section Headers
-          │               │
-          ▼               ▼
- Segment Metadata   Section Metadata
-          │               │
-          └───────┬───────┘
-                  ▼
-        Human-readable Output
+             Input ELF File
+                    │
+                    ▼
+              Read ELF Header
+                    │
+          ┌─────────┴─────────┐
+          ▼                   ▼
+   Program Headers      Section Headers
+          │                   │
+          ▼                   ▼
+    Parse Segments       Parse Sections
+          │                   │
+          ▼                   ▼
+    Decode Types          Decode Types
+    & Permissions             │
+          │                   │
+          └─────────┬─────────┘
+                    ▼
+            Formatted Output
 ```
-The project works directly with the binary representation instead of invoking readelf internally.
+The implementation works directly with ELF structures provided by the system headers and reads the binary metadata itself.
 
-This keeps the implementation close to the actual ELF format and makes the parsing process easier to study.
+readelf is not used internally by the core parser.
 
-🛠️ Technologies & Concepts
-Technologies
-C
-GNU/Linux
-ELF system structures
-Make
-GCC
-Concepts
-Binary File Parsing
-ELF Internals
-Operating Systems
-Systems Programming
-Executable File Formats
-Memory Mapping
-Virtual Addresses
-File Offsets
-Program Loading
-Linking and Compilation
-Reverse Engineering Fundamentals
-🚀 Quick Start
-Clone the Repository
-git clone <repository-url>
-cd elf-inspector
-Build
-make
-Run
-./elf-inspector elf-inspector
+🛠️ Key Design Decisions
+Direct Binary Parsing
 
-You can also inspect another ELF executable:
+The project intentionally parses the ELF file directly instead of executing an external inspection utility.
 
-./elf-inspector /bin/ls
-Clean Build Files
-make clean
-🧪 Validation
+This keeps the implementation close to the actual representation of the ELF format.
 
-To verify the parser's output, ELF Inspector can be compared against the standard Linux readelf utility.
+Human-readable Metadata
 
-ELF Header
-readelf -h elf-inspector
-Program Headers
-readelf -l elf-inspector
-Section Headers
-readelf -S elf-inspector
+ELF structures contain many numeric constants. Displaying only raw numbers would make the output difficult to interpret.
 
-The same binary can then be analyzed using:
-
-./elf-inspector elf-inspector
-
-The outputs can be compared across values such as:
-
-ELF class
-Entry point
-Header counts
-Segment types
-File offsets
-Virtual addresses
-File sizes
-Memory sizes
-Permissions
-Section types
-Section addresses
-Section sizes
-
-This validation approach helps ensure that the information parsed by the project corresponds to the ELF metadata reported by an established inspection utility.
-
-🏗️ Design Decisions
-Direct ELF Parsing
-
-The project reads ELF metadata directly from the binary instead of executing readelf internally.
-
-This is important because the goal is to understand how ELF structures are represented and accessed programmatically.
-
-Human-readable Output
-
-ELF structures contain many numeric constants. The project translates recognized values into meaningful names such as:
+Therefore, recognized values are translated into meaningful names such as:
 
 LOAD
 PHDR
@@ -251,50 +194,151 @@ NOTE
 PROGBITS
 SYMTAB
 DYNSYM
+Explicit Unknown Handling
 
-This makes the output easier to understand and analyze.
-
-Explicit Unknown-Type Handling
-
-When the inspector encounters an unsupported or unknown ELF type, it reports:
+If an ELF type is not recognized by the current implementation, it is reported as:
 
 UNKNOWN
 
-instead of silently ignoring the value.
+Rather than silently ignoring unsupported values, the tool makes the limitation visible. This improves transparency during analysis and debugging.
 
-This makes the tool's behavior more transparent and helps identify areas that could be extended in future versions.
+Focused Command-Line Interface
 
-📚 Current Scope
+The tool follows a simple interface:
 
-The current version focuses specifically on ELF metadata inspection.
+./elf-inspector <elf-file>
 
-Supported
+This keeps the utility lightweight and makes it easy to test against different ELF binaries.
+
+🚀 Getting Started
+Requirements
+Linux / Unix-like environment
+GCC
+GNU Make
+An ELF binary to inspect
+Build
+make
+Run
+./elf-inspector <elf-file>
+
+For example:
+
+./elf-inspector /bin/ls
+
+You can also compile a small C program and inspect the resulting executable:
+
+gcc hello.c -o hello
+./elf-inspector hello
+Clean
+make clean
+🧪 Validation
+
+Correctness is an important part of a binary parser.
+
+To validate the implementation, the same ELF binary can be inspected using both ELF Inspector and the standard Linux readelf utility.
+
 ELF Header
-ELF Class
-Entry Point
-Program Header Count
-Section Header Count
-Program Header Metadata
-Segment Types
-File Offsets
-Virtual Addresses
-File Sizes
-Memory Sizes
-Segment Permissions
-Section Header Metadata
-Section Types
-Unknown-Type Reporting
-Not Intended To
+./elf-inspector elf-inspector
+readelf -h elf-inspector
+Program Headers
+readelf -l elf-inspector
+Section Headers
+readelf -S elf-inspector
 
-ELF Inspector is not intended to be a complete replacement for readelf or professional reverse-engineering platforms.
+The outputs can be compared using values such as:
 
-The project intentionally maintains a focused scope around the fundamental structures required to understand ELF binaries.
+ELF class
+Entry point
+Program header count
+Section header count
+Segment types
+File offsets
+Virtual addresses
+File sizes
+Memory sizes
+Permissions
+Section types
+Section sizes
 
-🔐 Security & Safety
+The objective is not to reproduce the entire readelf feature set, but to verify that the metadata parsed by ELF Inspector corresponds to the relevant ELF information reported by an established reference utility.
 
-ELF Inspector is an inspection-only analysis utility.
+📦 Current Scope
 
-The core workflow does not execute the target ELF file:
+The current version provides inspection of:
+
+ELF Header
+
+ELF class
+Entry point
+Program header count
+Section header count
+
+Program Headers
+
+Segment index
+Segment type
+File offset
+Virtual address
+File size
+Memory size
+Permissions
+
+Section Headers
+
+Section index
+Section type
+Virtual address
+File offset
+Section size
+
+The project intentionally maintains a focused scope rather than attempting to reproduce every capability of professional ELF-analysis tools.
+
+🔮 Future Extensions
+
+The architecture can be extended to support additional ELF information, including:
+
+Endianness
+Machine architecture
+ELF file type
+ELF version information
+Section names and flags
+Alignment information
+ELF interpreter
+Symbol tables
+Dynamic symbols
+Relocation entries
+Section-to-segment mappings
+Stronger malformed-input validation
+Additional ELF classes and architectures
+More detailed command-line options
+
+These are considered future extensions rather than part of the current implementation.
+
+🎓 Learning Outcomes
+
+Building ELF Inspector provides practical experience with:
+
+C systems programming
+Binary file parsing
+ELF data structures
+File I/O
+Fixed-width integer types
+Virtual addresses and file offsets
+Program loading concepts
+Segment permissions and flags
+Section organization
+Command-line arguments
+GCC compiler warnings
+GNU Make
+Linux executable formats
+
+More importantly, the project demonstrates how low-level binary metadata can be transformed into information that is meaningful to a developer or systems programmer.
+
+🔐 Security Note
+
+ELF Inspector is designed as an inspection and learning utility.
+
+Its core workflow reads and parses ELF metadata without executing the target ELF file:
 ```text
 ELF File
    ↓
@@ -304,57 +348,27 @@ Parse Structures
    ↓
 Display Information
 ```
-It is therefore suitable as a learning and research tool for exploring executable structures. Nevertheless, unknown or untrusted binaries should always be handled in an appropriate controlled environment.
+It is not intended to replace dedicated malware-analysis, reverse-engineering, or security-analysis platforms. Untrusted binaries should still be handled in an appropriate controlled environment.
 
-🎓 Learning Outcomes
-
-Through this project, the implementation demonstrates practical understanding of:
-
-How ELF binaries are structured
-How binary data can be parsed in C
-How ELF headers provide the information required to interpret the file
-How Program Headers describe runtime-oriented segments
-How Section Headers describe logical file organization
-The difference between file offsets and virtual addresses
-The difference between file size and memory size
-How segment permissions are represented
-How low-level numeric metadata can be converted into meaningful information
-How binary-parser implementations can be validated against established tools
-🔮 Future Improvements
-
-Possible extensions include:
-
-Symbol table inspection
-String table extraction
-Dynamic section analysis
-Relocation information
-More ELF architectures and variants
-Additional ELF and GNU-specific structures
-More detailed error handling and malformed-file validation
-Extended command-line options
-Automated comparison tests against readelf
 💡 Project Philosophy
 
 Understand the binary by parsing the binary.
 
-The main value of ELF Inspector is not simply displaying ELF information. It is understanding how that information is stored, located, interpreted, and related to the execution of a program.
+ELF Inspector is built around a simple idea: understanding executable files becomes much clearer when the underlying structures are inspected directly.
 
-The project connects:
+The project brings together:
 ```text
-C Programming
-      +
-Binary File Parsing
-      +
-Operating Systems
-      +
-Executable Formats
-      +
-Memory Concepts
-      +
-Linux Internals
+C
+│
+├── Binary File I/O
+├── ELF Structures
+├── Memory Concepts
+├── Program Loading
+├── Executable Formats
+└── Low-level Metadata Analysis
 ```
-ELF Inspector is therefore a compact but practical systems-programming project that turns the ELF specification into a working binary-analysis utility.
+Rather than treating an executable as a black box, ELF Inspector provides a practical view into the metadata that defines its structure and runtime representation.
 
 📄 License
 
-This project is primarily intended for educational and learning purposes.
+This project is intended primarily for educational and learning purposes
